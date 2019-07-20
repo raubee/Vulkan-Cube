@@ -230,11 +230,27 @@ int CreateCommandBuffer()
 
 int CreateSwapChain()
 {
+	uint32_t formatCount;
+	vk_res = vkGetPhysicalDeviceSurfaceFormatsKHR(infos.gpus[0], surface, &formatCount, nullptr);
+
+	if (vk_res != VK_SUCCESS)
+	{
+		return -1;
+	}
+
+	VkSurfaceFormatKHR * surfFormats = (VkSurfaceFormatKHR*)malloc(formatCount * sizeof(VkSurfaceFormatKHR));
+	vk_res = vkGetPhysicalDeviceSurfaceFormatsKHR(infos.gpus[0], surface, &formatCount, surfFormats);
+
+	if (vk_res != VK_SUCCESS)
+	{
+		return -1;
+	}
+
 	VkSwapchainCreateInfoKHR swap_chain_info = {};
 	swap_chain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swap_chain_info.pNext = nullptr;
 	swap_chain_info.surface = surface;
-	swap_chain_info.imageFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+	swap_chain_info.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
 	VkSurfaceCapabilitiesKHR capabilities;
 
@@ -248,6 +264,7 @@ int CreateSwapChain()
 	swap_chain_info.minImageCount = capabilities.minImageCount;
 	swap_chain_info.imageExtent.width = 200;
 	swap_chain_info.imageExtent.height = 200;
+	swap_chain_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 	swap_chain_info.preTransform = capabilities.currentTransform;
 
 	vk_res = vkCreateSwapchainKHR(device, &swap_chain_info, nullptr, &swap_chain);
