@@ -1,10 +1,14 @@
-#ifndef UNICODE
-#define UNICODE
-#endif
+#define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define VK_USE_PLATFORM_WIN32_KHR 
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
-#define VK_USE_PLATFORM_WIN32_KHR
-
-#include <vulkan/vulkan.h>
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+ 
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -13,8 +17,6 @@
 
 #define ASSERT_VK(res) if (vk_res != VK_SUCCESS){return -1;}
 #define ASSERT(res) if (result != 0){ exit(-1);}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #define APP_NAME "Vulkan Cube";
 
@@ -342,7 +344,7 @@ int createGraphicsPipeline()
 	graph_info.layout = pipeline_layout;
 	graph_info.renderPass = render_pass;
 
-	vk_res = vkCreateGraphicsPipelines(device, nullptr, 1, &graph_info, nullptr, &graphics_pipeline);
+	//vk_res = vkCreateGraphicsPipelines(device, nullptr, 1, &graph_info, nullptr, &graphics_pipeline);
 	ASSERT_VK(vk_res);
 
 	return 0;
@@ -365,8 +367,6 @@ void draw()
 
 void setup_vulkan(HINSTANCE hInstance, HWND hwnd)
 {
-	OutputDebugString(L"[CubeVulkan] Starting Application...");
-
 	infos.connection = hInstance;
 	infos.window = hwnd;
 
@@ -416,75 +416,24 @@ void ShutdownVulkan()
 	vkDestroyInstance(instance, nullptr);
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow)
-{
-	// Register the window class.
-	const wchar_t CLASS_NAME[] = L"Vulkan Cube";
+int main() {
+	glfwInit();
 
-	WNDCLASS wc = { };
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
 
-	wc.lpfnWndProc = WindowProc;
-	wc.hInstance = hInstance;
-	wc.lpszClassName = CLASS_NAME;
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-	RegisterClass(&wc);
+	setup_vulkan(GetModuleHandle(nullptr), glfwGetWin32Window(window));
 
-	// Create the window.
-
-	HWND hwnd = CreateWindowEx(
-		0,                              // Optional window styles.
-		CLASS_NAME,                     // Window class
-		CLASS_NAME,    // Window text
-		WS_OVERLAPPEDWINDOW,            // Window style
-
-		// Size and position
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-
-		NULL,       // Parent window    
-		NULL,       // Menu
-		hInstance,  // Instance handle
-		NULL        // Additional application data
-	);
-
-	if (hwnd == NULL)
-	{
-		exit(0);
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 	}
 
-	ShowWindow(hwnd, nCmdShow);
+	glfwDestroyWindow(window);
 
-	setup_vulkan(hInstance, hwnd);
+	glfwTerminate();
 
-	MSG msg = { };
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-
-	exit(0);
-}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-	case WM_DESTROY:
-		ShutdownVulkan();
-		PostQuitMessage(0);
-		return 0;
-
-	case WM_PAINT:
-	{
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hwnd, &ps);
-
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-		EndPaint(hwnd, &ps);
-	}
 	return 0;
-
-	}
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
