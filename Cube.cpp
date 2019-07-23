@@ -8,15 +8,15 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
- 
+
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <windows.h>
 
-#define ASSERT_VK(res) if (vk_res != VK_SUCCESS){return -1;}
-#define ASSERT(res) if (result != 0){ exit(-1);}
+#define ASSERT_VK(res) if (vk_res != VK_SUCCESS){return EXIT_FAILURE;}
+#define ASSERT(res) if (result != 0){ return EXIT_FAILURE;}
 
 #define APP_NAME "Vulkan Cube";
 
@@ -44,7 +44,7 @@ static ApplicationInfo infos;
 static VkInstance instance;
 static VkDevice device;
 static VkCommandPool command_pool;
-static VkCommandBuffer command_buffer;
+static std::vector<VkCommandBuffer> command_buffers;
 static VkSurfaceKHR surface;
 static VkSwapchainKHR swap_chain;
 
@@ -203,11 +203,13 @@ int createCommandBuffer()
 	VkCommandBufferAllocateInfo command_buffer_info = { };
 	command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	command_buffer_info.pNext = nullptr;
-	command_buffer_info.commandBufferCount = 1;
+	command_buffer_info.commandBufferCount = infos.image_buffers.size();
 	command_buffer_info.commandPool = command_pool;
 	command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-	vk_res = vkAllocateCommandBuffers(device, &command_buffer_info, &command_buffer);
+	command_buffers.resize(infos.image_buffers.size());
+
+	vk_res = vkAllocateCommandBuffers(device, &command_buffer_info, command_buffers.data());
 	ASSERT_VK(vk_res);
 
 	return 0;
@@ -358,14 +360,14 @@ void draw()
 	cmd_begin_info.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 	cmd_begin_info.pInheritanceInfo = nullptr;
 
-	vkBeginCommandBuffer(command_buffer, &cmd_begin_info);
+	//vkBeginCommandBuffer(command_buffers, &cmd_begin_info);
 
-	vkEndCommandBuffer(command_buffer);
+	//vkEndCommandBuffer(command_buffers);
 
 	//vkQueueSubmit()
 }
 
-void setup_vulkan(HINSTANCE hInstance, HWND hwnd)
+int setup_vulkan(HINSTANCE hInstance, HWND hwnd)
 {
 	infos.connection = hInstance;
 	infos.window = hwnd;
@@ -392,6 +394,8 @@ void setup_vulkan(HINSTANCE hInstance, HWND hwnd)
 	ASSERT(result);
 
 	draw();
+
+	return EXIT_SUCCESS;
 }
 
 void ShutdownVulkan()
@@ -399,6 +403,7 @@ void ShutdownVulkan()
 	vkDestroyPipeline(device, graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 	vkDestroyRenderPass(device, render_pass, nullptr);
+	vkFreeCommandBuffers(device, command_pool, command_buffers.size(), command_buffers.data());
 	vkDestroyCommandPool(device, command_pool, nullptr);
 
 	for (auto image_view : infos.image_views)
@@ -425,7 +430,8 @@ int main() {
 	uint32_t extensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-	setup_vulkan(GetModuleHandle(nullptr), glfwGetWin32Window(window));
+	int result = setup_vulkan(GetModuleHandle(nullptr), glfwGetWin32Window(window));
+	ASSERT(result);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -435,5 +441,5 @@ int main() {
 
 	glfwTerminate();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
