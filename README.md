@@ -9,7 +9,7 @@ Vulkan concepts adressed:
 - The swap chain and framebuffers
 - Graphics pipelines and render pass
 - Uniforms and Vertex/Indices descriptors
-- Staging buffer and transfer memory Host to device Local
+- Staging buffer and transfer memory Host to device
 - Loading textures
 - Depth test
 
@@ -21,3 +21,5 @@ Maths : [GLM](https://glm.g-truc.net/0.9.9/index.html)</br>
 Image loading : [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)</br>
 
 Implementation based on https://vulkan-tutorial.com/ tutorial.
+
+<img src="./img/capture.png" style="display: block; margin-right:auto; margin-left:auto;"/> 
